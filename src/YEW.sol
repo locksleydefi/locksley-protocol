@@ -1,56 +1,68 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title YEW — Treasury Token
+ * @title YEW
  * @notice YEW is the treasury token for Locksley Protocol.
- *         - Fixed supply: 10,000,000 (10M)
- *         - 100% to community treasury at launch
- *         - No mint function — supply is fixed forever
+ *         Every harvest on GRAZE vaults buys YEW from fees and adds it to
+ *         the YEW/ETH LP — providing automatic buy pressure.
  *
- *         The YEW treasury (this contract) receives:
- *           - YEW/ETH LP tokens from GRAZE performance fees
- *           - ETH from team fee share
- *           - Any rescued tokens
+ *         Max supply: 1,000,000,000 YEW (1 billion × 10¹⁸).
+ *         Emissions schedule: 0.05 YEW/block, halved every 30 days (locked).
+ *
+ *         YEW is minted exclusively by YEWVaultChef (set once via setVault).
  */
 contract YEW is ERC20, Ownable {
-    using SafeERC20 for IERC20;
 
-    /// @notice Total supply is fixed at 10,000,000
-    uint256 public constant MAX_SUPPLY = 10_000_000 * 1e18;
+    /// @notice Maximum total supply: 1 billion × 10¹⁸
+    uint256 public constant MAX_SUPPLY = 1_000_000_000 * 10**18;
+
+    /// @notice Maps contract address → whether it is allowed to mint YEW
+    mapping(address => bool) public minters;
+
+    /// @notice Emitted when minting permission is updated
+    event MinterUpdated(address indexed vault, bool allowed);
+
+    /// @notice Emitted when new YEW is minted
+    event Minted(address indexed to, uint256 amount);
+
+    /// @notice Emitted when max supply is reached
+    event MaxSupplyReached(address indexed caller, uint256 attempted, uint256 minted);
 
     constructor(address initialOwner)
-        ERC20("YEW Treasury Token", "YEW")
+        ERC20("YEW", "YEW")
         Ownable(initialOwner)
     {
-        // 100% of supply to deployer (community treasury / Liquidity Bootstrap)
-        _mint(initialOwner, MAX_SUPPLY);
+        // YEW supply starts at 0 — all minted by YEWVaultChef over time
     }
 
-    /// @notice YEW cannot be minted after launch — supply is fixed
-    function mint(address to, uint256 amount) external onlyOwner {
-        revert("YEW: no minting after launch");
+    /// @notice Mint YEW — callable only by authorized minter contracts
+    /// @dev Set the minter via setVault() after deploying YEWVaultChef
+    function mint(address to, uint256 amount) external {
+        require(minters[msg.sender], "YEW: caller is not an authorized minter");
+        uint256 currentSupply = totalSupply();
+        if (currentSupply + amount > MAX_SUPPLY) {
+            uint256 canMint = MAX_SUPPLY - currentSupply;
+            if (canMint > 0) {
+                _mint(to, canMint);
+                emit Minted(to, canMint);
+                emit MaxSupplyReached(msg.sender, amount, canMint);
+            } else {
+                emit MaxSupplyReached(msg.sender, amount, 0);
+            }
+        } else {
+            _mint(to, amount);
+            emit Minted(to, amount);
+        }
     }
 
-    /// @notice Sweep accidental ERC20 transfers to owner
-    function sweepToken(IERC20 token, address to) external onlyOwner {
-        uint256 balance = token.balanceOf(address(this));
-        require(balance > 0, "YEW: nothing to sweep");
-        token.safeTransfer(to, balance);
-        emit SweepToken(address(token), balance);
+    /// @notice Authorize or revoke a contract's right to mint YEW
+    /// @dev Only YEW owner (James) can call this
+    function setVault(address vault, bool allowed) external onlyOwner {
+        minters[vault] = allowed;
+        emit MinterUpdated(vault, allowed);
     }
-
-    /// @notice Sweep ETH held by YEW treasury
-    function sweepETH(address payable to) external onlyOwner {
-        uint256 balance = address(this).balance;
-        require(balance > 0, "YEW: nothing to sweep");
-        to.transfer(balance);
-    }
-
-    event SweepToken(address indexed token, uint256 amount);
 }
