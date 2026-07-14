@@ -25,9 +25,9 @@ Users deposit LP tokens → earn FLETCH rewards → FLETCH has value from fee ac
 - Value backed by YEW treasury accumulation
 
 ## Vaults (MVP)
-1. GRAZE — CASHCAT-ETH LP (Noxa) — Featured vault
-2. GRAZE — FLETCH-ETH LP (own LP)
-3. GRAZE — JUGGERNAUT-ETH LP (Noxa)
+1. GRAZE — CASHCAT-ETH LP — `0xa70fc67c9f69da90b63a0e4c05d229954574e313`
+2. GRAZE — FLETCH-ETH LP — TBD (create FLETCH-ETH pool on DEX after deployment)
+3. GRAZE — JUGGERNAUT-ETH LP — `0x588b0785f50063260003b7790c42f1ef74902746`
 4. THE GLADE — VEX-ETH LP (Virtuals V2) — Coming soon
 
 ## Tech Stack
@@ -44,13 +44,13 @@ Users deposit LP tokens → earn FLETCH rewards → FLETCH has value from fee ac
 - Forest/locksley visual identity throughout
 
 ## Next Steps
-1. Verify FLETCH and YEW token names available on Robinhood Chain
-2. Write Litepaper
-3. Write Solidity contracts (FLETCH, YEW, GRAZE vault)
-4. Test on Robinhood testnet
-5. Deploy via Remix
-6. Build frontend
-7. Host frontend on Netlify
-8. Socials setup (Twitter, Discord, Telegram)
-9. Seed LP (community or tiny seed)
-10. Launch
+- [x] Write Solidity contracts (FLETCH, YEW, GRAZEMasterChef)
+- [x] Build frontend (HTML/CSS/JS MVP)
+- [ ] Verify FLETCH and YEW token names available on Robinhood Chain
+- [ ] Test on Robinhood testnet
+- [ ] Deploy via Remix
+- [ ] Host frontend on Netlify
+- [ ] Write Litepaper
+- [ ] Socials setup (Twitter, Discord, Telegram)
+- [ ] Seed LP (community or tiny seed)
+- [ ] Launch
