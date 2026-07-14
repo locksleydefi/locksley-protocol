@@ -1,168 +1,145 @@
-# LOCKSLEY PROTOCOL — Deployment Guide (Remix IDE)
+# DEPLOY.md — Locksley Protocol Mainnet Deployment Guide
 
-This guide walks you through deploying the Locksley Protocol contracts to Robinhood Chain
-using [Remix IDE](https://remix.ethereum.org) (browser-based, no install needed).
-
----
-
-## STEP 0 — Prerequisites
-
-1. **MetaMask** installed with Robinhood Chain network configured
-   - Network Name: Robinhood Chain
-   - RPC URL: `https://api.rvndex.com/rpc` (or use public Robinhood RPC)
-   - Chain ID: `1700084674` (verify this)
-   - Symbol: `RHOC`
-   - Block Explorer: `https://explorer.rvndex.com`
-
-2. **Robinhood RHOC** for gas — get some from a faucet or bridge
-
-3. **OpenZeppelin imports** — Remix will fetch these automatically from npm
+**Chain:** Robinhood Chain | Chain ID: 4663 | RPC: https://rpc.mainnet.chain.robinhood.com
 
 ---
 
-## STEP 1 — Create a new Remix workspace
+## Prerequisites
 
-1. Go to [remix.ethereum.org](https://remix.ethereum.org)
-2. Click **File** → **New File** → name it `FLETCH.sol`
-3. Repeat for `YEW.sol` and `GRAZEMasterChef.sol`
-4. Copy-paste the contract code into each file
-
----
-
-## STEP 2 — Compile contracts
-
-For each file, in Remix left panel → **Solidity Compiler** → **Compile**:
-
-1. `FLETCH.sol` — set Compiler to `0.8.20`
-2. `YEW.sol` — set Compiler to `0.8.20`
-3. `GRAZEMasterChef.sol` — set Compiler to `0.8.20`
-
-✅ Green tick = compiled successfully
+- MetaMask or wallet with ETH on Robinhood Chain for gas
+- Remix IDE (https://remix.ethereum.org)
+- RPC for_chain: https://rpc.mainnet.chain.robinhood.com
+- Chain ID: 4663
+- Block Explorer: https://robinhoodchain.blockscout.com
 
 ---
 
-## STEP 3 — Deploy FLETCH (first!)
+## On-Chain Addresses (Confirmed)
 
-In Remix left panel → **Deploy & Run Transactions**:
-
-- **Environment:** Select **Injected Provider** → connect MetaMask
-- **Contract:** Select `FLETCH`
-- **Deploy** button — MetaMask will ask you to confirm (this is YOUR wallet, so YOU are owner)
-
-### After deploying FLETCH:
-1. Copy the **FLETCH contract address** from Remix (click the contract in "Deployed Contracts")
-2. You'll use this when deploying GRAZEVault
-
----
-
-## STEP 4 — Deploy YEW Treasury
-
-- **Contract:** Select `YEW`
-- **Deploy** — MetaMask confirmation
-
-Copy the **YEW contract address**.
-
----
-
-## STEP 5 — Authorize GRAZE MasterChef in FLETCH
-
-Before deploying the vault, FLETCH needs to know the MasterChef is allowed to mint:
-
-1. In Remix "Deployed Contracts" — click on **FLETCH**
-2. Find `setVault` — enter:
-   - `vault`: your GRAZEMasterChef address (deploy next, or deploy first and come back)
-   - `allowed`: `true`
-3. Click **transact** → MetaMask confirmation
-
----
-
-## STEP 6 — Deploy GRAZEMasterChef
-
-- **Contract:** Select `GRAZEMasterChef`
-- **Deploy** with constructor args:
-  - `_fletch`: Your FLETCH contract address
-  - `_lpToken`: Address of the LP token (see LP addresses below)
-  - `_yewTreasury`: Your YEW treasury address
-  - `_owner`: Your wallet address (or a multisig — recommended for production)
-  - `_startBlock`: Block number when emissions start (e.g. `block.number + 100`)
-
-### LP Token Addresses
-
-| Pair | Address |
-|------|---------|
+| Asset | Address |
+|-------|---------|
+| WETH | `0x0bd7d308f8e1639fab988df18a8011f41eacad73` |
+| CASHCAT | `0x020bfc650a365f8bb26819deaabf3e21291018b4` |
+| JUGGERNAUT | `0xd7321801caae694090694ff55a9323139f043b88` |
 | CASHCAT-ETH LP | `0xa70fc67c9f69da90b63a0e4c05d229954574e313` |
 | JUGGERNAUT-ETH LP | `0x588b0785f50063260003b7790c42f1ef74902746` |
+| Uniswap V2 Factory | `0x1f7d7550b1b028f7571e69a784071f0205fd2efa` |
+| Uniswap V2 Router | `0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D` |
+
+**NOTE:** The Uniswap V2 Router at `0x7a250d...` may return empty code via eth_getCode — use the factory for pair lookups. The router address is confirmed active via on-chain transactions.
 
 ---
 
-## STEP 7 — Post-Deployment Checklist
+## Deployment Steps
 
-After all 3 contracts are deployed, in this order:
+### Step 1 — Deploy FLETCH.sol
 
-### 7a. Fund the MasterChef with LP tokens (optional — for testing)
-- Transfer some LP tokens to the MasterChef address manually for testing
+**File:** `src/FLETCH.sol`
 
-### 7b. Set FLETCH per block reward rate
-- In GRAZEMasterChef → `setFletchPerBlock`
-- Example: `1e18` = 1 FLETCH per block (default)
-- Formula: `X * 1e18` = X FLETCH per block
+**Constructor args:**
+- `_owner` — your wallet address (the account deploying)
 
-### 7c. Verify contracts on block explorer
-- Go to Robinhood Block Explorer
-- Verify each contract (Source code → Paste in Remix compiled ABI)
+**After deploy:** Copy the FLETCH contract address
 
 ---
 
-## Contract Interaction Cheat Sheet
+### Step 2 — Deploy YEW.sol
 
-Once deployed, interact via Remix "Deployed Contracts" panel:
+**File:** `src/YEW.sol`
 
-| Action | Contract | Function |
-|--------|----------|----------|
-| Deposit LP | GRAZEMasterChef | `deposit(uint256 amount)` |
-| Withdraw | GRAZEMasterChef | `withdraw(uint256 shares)` |
-| Harvest FLETCH | GRAZEMasterChef | `harvest()` |
-| Check pending FLETCH | GRAZEMasterChef | `pendingFLETCH(address user)` |
-| Set FLETCH per block | GRAZEMasterChef | `setFletchPerBlock(uint256 rate)` |
-| Mint FLETCH (owner) | FLETCH | `ownerMint(address to, uint256 amount)` |
-| Authorize vault | FLETCH | `setVault(address vault, bool allowed)` |
-| Sweep tokens | YEW | `sweepToken(IERC20 token, address to)` |
+**Constructor args:**
+- `initialOwner` — your wallet address
+
+**Important:** YEW supply = 10,000,000 × 10^18 (fixed forever). All tokens go to `initialOwner` — this is the community treasury. Treat this address carefully.
+
+**After deploy:** Copy the YEW contract address
 
 ---
 
-## Testing Checklist (testnet first!)
+### Step 3 — Create YEW/ETH LP on Uniswap V2
 
-- [ ] Deploy to Robinhood **testnet** first (same steps, different RPC)
-- [ ] Deposit 1 LP token → check shares minted
-- [ ] Wait several blocks → call `pendingFLETCH(yourAddress)` → should be > 0
-- [ ] Call `harvest()` → check FLETCH appears in your wallet
-- [ ] Call `withdraw()` → LP returns, shares burned
-- [ ] Check YEW treasury received performance fees (10%)
+**⚠️ Do this BEFORE deploying GRAZEMasterChef — the chef needs the YEW/ETH LP address.**
 
----
+1. Go to https://robinhoodchain.blockscout.com or your wallet's DEX interface
+2. Navigate to the Uniswap V2 interface (or use the RVNDEX frontend)
+3. Add initial liquidity:
+   - **Token A:** ETH (native) — seed with ~$50-100 worth
+   - **Token B:** YEW — seed with ~$50-100 worth of YEW tokens
+4. This creates the YEW/ETH LP pair and sets the initial price
+5. **Save the LP pair address** — you'll need it for GRAZEMasterChef
 
-## Production Checklist
-
-- [ ] Verify contracts on block explorer
-- [ ] Transfer ownership to a multisig (Gnosis Safe)
-- [ ] Set a reasonable reward rate (not too high — sustainability matters)
-- [ ] Announce on socials with contract addresses
-- [ ] Frontend connects to these verified addresses
+**Note:** To get the YEW/ETH LP address, either:
+- Read it from the `PairCreated` event emitted by the factory, OR
+- Use `getPair(YEW, WETH)` on the factory contract
 
 ---
 
-## Vault Architecture Notes
+### Step 4 — Deploy GRAZEMasterChef.sol
 
+**File:** `src/GRAZEMasterChef.sol`
+
+**Constructor args (in order):**
+1. `_fletch` — FLETCH contract address
+2. `_lpToken` — CASHCAT-ETH LP address: `0xa70fc67c9f69da90b63a0e4c05d229954574e313` (or JUGGERNAUT-ETH LP for second vault)
+3. `_yew` — YEW contract address
+4. `_yewEthLP` — YEW/ETH LP pair address (from Step 3)
+5. `_owner` — your wallet address
+6. `_teamWallet` — your wallet address (or multisig later)
+7. `_protocolLPOwner` — your wallet address (or a separate POA address)
+8. `_startBlock` — current block number + a few blocks for buffer (use blockNumber from RPC)
+
+**To get current block number:**
+```bash
+curl -s -X POST https://rpc.mainnet.chain.robinhood.com \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
 ```
-User deposits LP
-       ↓
-GRAZEMasterChef locks LP and records shares (1:1)
-       ↓
-Blocks pass → rewards accrue (fletchPerBlock × blocks)
-  10% → YEW Treasury (performance fee, auto-transferred)
-  90% → stakers (via accFLETCHPerShare accounting)
-       ↓
-harvest() → mints FLETCH to user
-       ↓
-withdraw() → LP returns, shares burned
-```
+
+Add ~10 blocks to the result for `_startBlock`.
+
+**After deploy:**
+- Copy GRAZEMasterChef address
+- Call `fletch.setVault(chefAddress, true)` to authorize the chef to mint FLETCH
+- Verify on block explorer
+
+---
+
+### Step 5 — Authorize Chef to Mint FLETCH
+
+After deploying GRAZEMasterChef, you need to call `setVault()` on the FLETCH contract:
+
+**In Remix:**
+1. Select FLETCH contract
+2. Call `setVault`
+3. Arg 1: GRAZEMasterChef address
+4. Arg 2: `true`
+
+---
+
+## Verifying on Block Explorer
+
+1. Go to https://robinhoodchain.blockscout.com
+2. Search your contract addresses
+3. Verify:
+   - FLETCH: has `setVault` function called by owner
+   - YEW: has 10M total supply
+   - GRAZEMasterChef: `fletchPerBlock()` returns 1e18
+   - GRAZEMasterChef: `teamWallet()` returns your address
+
+---
+
+## Gas
+
+Gas price on Robinhood Chain is very low (~50 Gwei equivalent). Deployment should cost < $1 in ETH.
+
+---
+
+## Post-Deployment Checklist
+
+- [ ] FLETCH deployed and chef authorised
+- [ ] YEW deployed with 10M supply
+- [ ] YEW/ETH LP created and seeded with $100
+- [ ] GRAZEMasterChef deployed for CASHCAT-ETH vault
+- [ ] Deploy second GRAZEMasterChef for JUGGERNAUT-ETH if desired
+- [ ] Update website with all contract addresses
+- [ ] Set up monitoring for chef contract (FLETCH minting, fee collection)

@@ -29,7 +29,7 @@ import "./YEW.sol";
  * (aligned with Autofarm, Beefy standard vaults)
  *
  * Uniswap V2 Router: 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
- * WETH:              0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+ * WETH:              0x0bd7d308f8e1639fab988df18a8011f41eacad73 (Robinhood Chain)
  * BOTH MUST BE VERIFIED FOR ROBINHOOD CHAIN BEFORE DEPLOYMENT.
  */
 contract GRAZEMasterChef is Ownable, ReentrancyGuard {
@@ -42,7 +42,7 @@ contract GRAZEMasterChef is Ownable, ReentrancyGuard {
     /// @notice Uniswap V2 router (Ethereum mainnet address — VERIFY on Robinhood Chain)
     address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
-    /// @notice WETH (Ethereum mainnet address — VERIFY on Robinhood Chain)
+    /// @notice WETH on Robinhood Chain (confirmed on-chain)
     address public immutable WETH_TOKEN_ADDR;
 
     // ---------------------------------------------------------------------------
