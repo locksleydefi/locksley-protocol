@@ -24,7 +24,7 @@ using [Remix IDE](https://remix.ethereum.org) (browser-based, no install needed)
 
 1. Go to [remix.ethereum.org](https://remix.ethereum.org)
 2. Click **File** → **New File** → name it `FLETCH.sol`
-3. Repeat for `YEW.sol` and `GRAZEVault.sol`
+3. Repeat for `YEW.sol` and `GRAZEMasterChef.sol`
 4. Copy-paste the contract code into each file
 
 ---
@@ -35,7 +35,7 @@ For each file, in Remix left panel → **Solidity Compiler** → **Compile**:
 
 1. `FLETCH.sol` — set Compiler to `0.8.20`
 2. `YEW.sol` — set Compiler to `0.8.20`
-3. `GRAZEVault.sol` — set Compiler to `0.8.20`
+3. `GRAZEMasterChef.sol` — set Compiler to `0.8.20`
 
 ✅ Green tick = compiled successfully
 
@@ -64,29 +64,34 @@ Copy the **YEW contract address**.
 
 ---
 
-## STEP 5 — Authorize GRAZE Vault in FLETCH
+## STEP 5 — Authorize GRAZE MasterChef in FLETCH
 
-Before deploying the vault, FLETCH needs to know the vault is allowed to mint:
+Before deploying the vault, FLETCH needs to know the MasterChef is allowed to mint:
 
 1. In Remix "Deployed Contracts" — click on **FLETCH**
 2. Find `setVault` — enter:
-   - `vault`: your GRAZEVault address (deploy next, or deploy vault first and come back)
+   - `vault`: your GRAZEMasterChef address (deploy next, or deploy first and come back)
    - `allowed`: `true`
 3. Click **transact** → MetaMask confirmation
 
 ---
 
-## STEP 6 — Deploy GRAZEVault
+## STEP 6 — Deploy GRAZEMasterChef
 
-- **Contract:** Select `GRAZEVault`
+- **Contract:** Select `GRAZEMasterChef`
 - **Deploy** with constructor args:
-  - `_stakingToken`: Address of the LP token (e.g. CASHCAT-ETH pair on Robinhood)
-    - **⚠️ For MVP:** Use WETH-ETH pair or a test LP. Get LP address from the DEX.
   - `_fletch`: Your FLETCH contract address
-  - `_yew`: Your YEW treasury address
+  - `_lpToken`: Address of the LP token (see LP addresses below)
+  - `_yewTreasury`: Your YEW treasury address
   - `_owner`: Your wallet address (or a multisig — recommended for production)
+  - `_startBlock`: Block number when emissions start (e.g. `block.number + 100`)
 
-Click **Deploy** → MetaMask confirmation.
+### LP Token Addresses
+
+| Pair | Address |
+|------|---------|
+| CASHCAT-ETH LP | `0xa70fc67c9f69da90b63a0e4c05d229954574e313` |
+| JUGGERNAUT-ETH LP | `0x588b0785f50063260003b7790c42f1ef74902746` |
 
 ---
 
@@ -94,13 +99,13 @@ Click **Deploy** → MetaMask confirmation.
 
 After all 3 contracts are deployed, in this order:
 
-### 7a. Fund the vault with FLETCH rewards (optional — for testing)
-- Transfer some FLETCH to the vault address manually (for testing without minting)
+### 7a. Fund the MasterChef with LP tokens (optional — for testing)
+- Transfer some LP tokens to the MasterChef address manually for testing
 
-### 7b. Set reward rate
-- In GRAZEVault → `setRewardRate`
-- Example: `3858024691358` = ~0.004 FLETCH per second ≈ 1 FLETCH per 3 days
-- Formula: `1_000_000_000_000_000_000` (1 FLETCH) / 86400 (seconds/day) / 3 (days) = `3,858,024,691,358`
+### 7b. Set FLETCH per block reward rate
+- In GRAZEMasterChef → `setFletchPerBlock`
+- Example: `1e18` = 1 FLETCH per block (default)
+- Formula: `X * 1e18` = X FLETCH per block
 
 ### 7c. Verify contracts on block explorer
 - Go to Robinhood Block Explorer
@@ -114,13 +119,11 @@ Once deployed, interact via Remix "Deployed Contracts" panel:
 
 | Action | Contract | Function |
 |--------|----------|----------|
-| Deposit LP | GRAZEVault | `deposit(uint256 amount)` |
-| Withdraw | GRAZEVault | `withdraw(uint256 sharesToRedeem)` |
-| Claim FLETCH | GRAZEVault | `claimFLETCH()` |
-| Harvest rewards | GRAZEVault | `harvest()` |
-| Check pending FLETCH | GRAZEVault | `pendingFLETCH(address user)` |
-| Set reward rate | GRAZEVault | `setRewardRate(uint256 rate)` |
-| Update fees | GRAZEVault | `setFees(uint256 perf, uint256 wdw)` |
+| Deposit LP | GRAZEMasterChef | `deposit(uint256 amount)` |
+| Withdraw | GRAZEMasterChef | `withdraw(uint256 shares)` |
+| Harvest FLETCH | GRAZEMasterChef | `harvest()` |
+| Check pending FLETCH | GRAZEMasterChef | `pendingFLETCH(address user)` |
+| Set FLETCH per block | GRAZEMasterChef | `setFletchPerBlock(uint256 rate)` |
 | Mint FLETCH (owner) | FLETCH | `ownerMint(address to, uint256 amount)` |
 | Authorize vault | FLETCH | `setVault(address vault, bool allowed)` |
 | Sweep tokens | YEW | `sweepToken(IERC20 token, address to)` |
@@ -131,11 +134,10 @@ Once deployed, interact via Remix "Deployed Contracts" panel:
 
 - [ ] Deploy to Robinhood **testnet** first (same steps, different RPC)
 - [ ] Deposit 1 LP token → check shares minted
-- [ ] Wait 1 minute → call `pendingFLETCH(yourAddress)` → should be > 0
-- [ ] Call `harvest()` → check FLETCH appears in vault
-- [ ] Call `claimFLETCH()` → FLETCH appears in your wallet
+- [ ] Wait several blocks → call `pendingFLETCH(yourAddress)` → should be > 0
+- [ ] Call `harvest()` → check FLETCH appears in your wallet
 - [ ] Call `withdraw()` → LP returns, shares burned
-- [ ] Check YEW treasury received fees
+- [ ] Check YEW treasury received performance fees (10%)
 
 ---
 
@@ -154,13 +156,13 @@ Once deployed, interact via Remix "Deployed Contracts" panel:
 ```
 User deposits LP
        ↓
-GRAZEVault.mint shares (1:1 after 0.5% fee)
+GRAZEMasterChef locks LP and records shares (1:1)
        ↓
-Vault accrues FLETCH rewards per second (rewardRate)
-       ↓
-harvest() → mints FLETCH to vault
-  10% → YEW Treasury (performance fee)
+Blocks pass → rewards accrue (fletchPerBlock × blocks)
+  10% → YEW Treasury (performance fee, auto-transferred)
   90% → stakers (via accFLETCHPerShare accounting)
        ↓
-User claims FLETCH via claimFLETCH()
+harvest() → mints FLETCH to user
+       ↓
+withdraw() → LP returns, shares burned
 ```
