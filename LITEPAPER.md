@@ -71,22 +71,45 @@ Performance fees taken in FLETCH require a FLETCH market to exist and have value
 
 ### FLETCH — The Yield Token
 - **Type:** ERC-20, mintable by authorised vaults only
-- **Total Supply:** Unlimited (inflationary via rewards)
-- **Distribution:** 100% to stakers via GRAZE vaults. No team allocation, no VC allocation, no pre-mine.
-- **Utility:** Yield token. Stake LP → earn FLETCH.
+- **Max Supply:** 1,000,000,000 (1 billion)
+- **Initial Supply:** 0 — pure emission token. No pre-mine, no VC allocation, no team allocation.
+- **Emission Rate:** 0.5 FLETCH per block. Halved 50% every 30 days (locked in contract).
+- **Utility:** Stake CASHCAT-ETH LP in GRAZE vault → earn FLETCH. Stake FLETCH-ETH LP in YEW vault → earn YEW.
 
 ### YEW — The Treasury Token
-- **Type:** ERC-20, fixed supply
-- **Total Supply:** 10,000,000 (10M)
-- **Initial Distribution:** 100% to community treasury (Liquidity Bootstrap Pool)
+- **Type:** ERC-20, fixed supply (capped)
+- **Max Supply:** 1,000,000,000 (1 billion)
+- **Initial Supply:** 0 — all minted by YEWVaultChef over ~7.5 years.
 - **Seed Price:** Set at launch by seeding YEW/ETH pool with $100
-- **Utility:** Governance, fee capture, treasury ownership
-- **Value Driver:** Every harvest buys YEW from the YEW/ETH LP, creating consistent buy pressure
+- **Utility:** Treasury ownership, fee capture. Every harvest on GRAZE buys YEW from fees.
+- **Value Driver:** 50% of all performance fees → routed to buy YEW → added to YEW/ETH LP. Automatic buy pressure on every harvest.
 
 ### YEW/ETH LP — The Treasury Asset
 The YEW treasury does not hold YEW tokens — it holds YEW/ETH LP tokens. The ETH portion accumulates with every harvest as the team sells its 25% cut and as the protocol buys YEW. The YEW side grows as protocol fees are routed to buy YEW.
 
 Over time the LP becomes more valuable, creating a genuine price floor and yield opportunity for YEW stakers.
+
+### Emission Schedule — Locked in Contract
+
+**The emission schedules for both FLETCH and YEW are hard-coded in the smart contracts. The owner CANNOT change them after deployment.** This is the honest, transparent approach.
+
+| Epoch | Days | FLETCH/block | YEW/block | FLETCH/30d | Cumulative FLETCH |
+|-------|------|-------------|-----------|------------|-------------------|
+| 0 | 1–30 | 0.500 | 0.050 | 12,960,000 | 12,960,000 |
+| 1 | 31–60 | 0.250 | 0.025 | 6,480,000 | 19,440,000 |
+| 2 | 61–90 | 0.125 | 0.013 | 3,240,000 | 22,680,000 |
+| 3 | 91–120 | 0.063 | 0.006 | 1,620,000 | 24,300,000 |
+| 4+ | 121+ | halving continues | 810,000/30d | → |
+
+**Year 1 totals:** ~37.8M FLETCH (3.8% of 1bn), ~3.78M YEW (0.38% of 1bn)
+**Max supply reached:** ~7.5 years at current schedule
+
+**Why this model?**
+- High initial emissions attract early degens (500%+ APR achievable with small TVL)
+- Halving prevents infinite inflation — supply is capped at 1bn each
+- APR compresses naturally as TVL grows — aligns early adopters and long-term holders
+- Owner cannot rug the emission schedule — it's enforced in contract code
+
 
 ---
 
@@ -115,20 +138,40 @@ When a fee is collected (performance or withdrawal):
 - Performance fees go through AMM — transparent and on-chain verifiable
 - Emergency LP withdrawal function exists for edge cases only
 - Try-catch around AMM calls prevents reverts from blocking withdrawals
+- **Emission schedule is locked in contract — owner cannot change it**
+
+### The Two-Vault System
+
+**VAULT 1 — GRAZE (CASHCAT-ETH LP → earn FLETCH)**
+- Stake your CASHCAT-ETH LP tokens
+- Earn FLETCH at 0.5/block, halved every 30 days
+- Pay 10% performance fee on harvests, 0.5% on withdrawals
+- FLETCH is needed to stake in the YEW vault (creating demand)
+
+**VAULT 2 — YEW (FLETCH-ETH LP → earn YEW)**
+- Stake your FLETCH-ETH LP tokens
+- Earn YEW at 0.05/block (10x less than FLETCH), same halving schedule
+- No performance fee on YEW vault (YEW is the treasury asset)
+- YEW has automatic buy pressure from GRAZE harvest fees (50% → buys YEW)
+
+**Why stake FLETCH-ETH LP to earn YEW?**
+Because FLETCH is needed for utility (earning YEW), holders have a reason to not sell their FLETCH. This creates a dampener on FLETCH selling pressure. Meanwhile, YEW is continuously bought by the protocol from harvest fees. This is the same model as CRV → CVX, or FXS → Frax.
+
 
 ---
 
 ## Roadmap
 
 ### Phase 1 ✅ — GRAZE (Current)
-- [x] Smart contracts (MasterChef V1 pattern, LP-based fee model)
-- [x] GRAZE vault (CASHCAT-ETH, JUGGERNAUT-ETH)
-- [x] FLETCH reward token
-- [x] YEW treasury token
+- [x] Smart contracts (MasterChef pattern, LP-based fee model)
+- [x] GRAZE vault (CASHCAT-ETH LP) — locked halving emission schedule
+- [x] YEW vault (FLETCH-ETH LP) — locked halving emission schedule
+- [x] FLETCH reward token (1bn max supply)
+- [x] YEW treasury token (1bn max supply)
 - [x] Performance fee → 50% YEW buy / 25% team / 25% protocol LP
-- [ ] Mainnet deployment (RPC confirmed)
-- [ ] Fair launch (Pump.fun)
-- [ ] Seed YEW/ETH LP with $100
+- [ ] Mainnet deployment on Robinhood Chain
+- [ ] Seed all 3 LPs: CASHCAT-ETH, FLETCH-ETH, YEW-ETH
+- [ ] Launch Twitter / community
 
 ### Phase 2 — THE GLADE
 - Multi-vault aggregation
@@ -154,7 +197,7 @@ A: Two things: (1) The YEW/ETH LP in the treasury grows with every harvest as pr
 A: Most yield aggregators rent liquidity from LPs — if LPs leave, the protocol's yield source disappears. Protocol-owned LP (POL) means GRAZE has its own independent liquidity that can't be taken away. The 25% protocol LP cut builds this over time.
 
 **Q: What's the difference between FLETCH and YEW?**
-A: FLETCH is an inflationary yield token — you earn it by staking. YEW is a fixed-supply ownership token — it represents your share of the treasury and governance rights. Think FLETCH = stock, YEW = ownership.
+A: FLETCH is a capped-supply yield token (1bn max) — you earn it by staking CASHCAT-ETH LP in GRAZE. YEW is a capped-supply treasury token (1bn max) — you earn it by staking FLETCH-ETH LP in the YEW vault. FLETCH has utility (needed to earn YEW), YEW has automatic buy pressure (50% of all GRAZE fees buy YEW). Think FLETCH = yield, YEW = ownership + fee capture.
 
 **Q: What happens when CASHCAT or JUGGERNAUT tokens dump?**
 A: GRAZE earns rewards in FLETCH regardless of the underlying token price. If the LP pair loses value, stakers' FLETCH APR may look high in token terms but low in USD terms — same as any yield farm. The protocol's 25% protocol LP cut means the team also loses when tokens dump — team and protocol are aligned with stakers.
