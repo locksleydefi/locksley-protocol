@@ -50,7 +50,7 @@ Users deposit LP tokens → earn FLETCH rewards → FLETCH has value from fee ac
 - [ ] Test on Robinhood testnet
 - [ ] Deploy via Remix
 - [ ] Host frontend on Netlify
-- [ ] Write Litepaper
+- [x] Write Litepaper
 - [ ] Socials setup (Twitter, Discord, Telegram)
 - [ ] Seed LP (community or tiny seed)
 - [ ] Launch
