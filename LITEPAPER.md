@@ -1,208 +1,164 @@
-# LOCKSLEY PROTOCOL
-## GRAZE — Yield Aggregator on Robinhood Chain
-**Version 1.0 | July 2026**
+# LITEPAPER — Locksley Protocol v1.2
 
 ---
 
 ## Abstract
 
-LOCKSLEY PROTOCOL is a decentralised yield aggregator built on Robinhood Chain. GRAZE, the flagship vault product, allows liquidity providers to stake LP tokens and automatically earn optimised yield through FLETCH token rewards. A portion of all yield harvested flows into the YEW treasury, creating a compounding feedback loop that grows the protocol's value backing. No VCs. No pre-mine. Fair launch.
+Locksley Protocol is a community-owned DeFi yield aggregator built on Robinhood Chain. Its flagship product, GRAZE, puts the "Meta" back in yield farming — earning yields from multiple protocols and returning them to liquidity providers, with a performance fee model that builds real protocol-owned liquidity.
+
+Two tokens work in concert:
+- **FLETCH** — the yield token. Earned by stakers in GRAZE vaults. Inflationary, minted on harvest.
+- **YEW** — the treasury token. Represents ownership of the protocol's real assets. Its value is backed by YEW buy pressure and the YEW/ETH LP growing in the treasury with every harvest.
+
+**Status:** Smart contracts deployed on Robinhood Chain. Fair launch in progress.
 
 ---
 
-## 1. What is LOCKSLEY?
+## The Problem
 
-LOCKSLEY is a community-built DeFi protocol designed to make yield farming accessible and sustainable on Robinhood Chain. We believe the best protocols are built *for* the community, not sold to them.
+Robinhood Chain is underserved. Despite being an EVM-compatible chain with fast finality and near-zero gas fees, it lacks the DeFi infrastructure seen on Ethereum, Arbitrum, or Solana. Liquidity is fragmented. Yield opportunities are siloed. And most protocols are controlled by VCs and insiders — not the community.
 
-The protocol operates as a set of autonomous vault contracts. Users deposit liquidity provider (LP) tokens into GRAZE vaults and earn FLETCH rewards proportional to their share of the vault. A 10% performance fee is applied on harvest and routed to the YEW treasury.
+The existing yield aggregators on Robinhood Chain:
+- Pay no meaningful performance fees → no organic growth mechanism
+- Have no real treasury → no price floor, no buy pressure
+- Rent liquidity from LPs → can be displaced overnight
 
-**The core loop:**
+---
+
+## The Solution: GRAZE
+
+GRAZE is a SushiSwap MasterChef V1-inspired yield aggregator. Users stake their LP tokens and earn FLETCH rewards. The protocol collects a **10% performance fee** on every harvest — taken as LP, not as an worthless governance token. That LP is split three ways:
 
 ```
-Deposit LP → Earn FLETCH → Fee flows to YEW → FLETCH becomes more valuable
+User harvests rewards worth 100 FLETCH
+    ↓
+90 FLETCH → User (90%)
+10 FLETCH → Protocol (10% performance fee, valued in LP terms)
+    ↓
+LP is removed → CASHCAT + ETH
+    ↓
+Split three ways:
+50% ETH → routed to buy YEW → added to YEW/ETH LP → YEW treasury ✅
+25% ETH → sent to team wallet                                 ✅
+25% CASHCAT + ETH → protocol-owned CASHCAT-ETH LP             ✅
 ```
 
----
-
-## 2. The Problem
-
-Yield farming on Robinhood Chain offers attractive returns — but comes with friction:
-
-- **Gas costs:** Every swap, stake, and claim costs gas. Small farmers lose more in fees than they earn.
-- **Manual tracking:** APRs fluctuate constantly. Positions need rebalancing to stay optimised.
-- **Impermanent loss:** Providing liquidity is risky. Without a compounding strategy, gains erode.
-- **Rug risk:** Many protocols take investor money and disappear. Trust requires transparency.
+This means:
+- **YEW gets real buy pressure** on every harvest — price discovery is real
+- **Protocol owns its own liquidity** — not renting from users
+- **Team gets paid in ETH** — sustainable income without selling user value
+- **FLETCH is not used as fee currency** — no dumping on a market that doesn't exist yet
 
 ---
 
-## 3. The Solution: GRAZE
+## Fee Model
 
-GRAZE vaults solve these problems by aggregating user deposits into a single smart vault strategy:
+| Fee Type | Amount | Currency | Split | Destination |
+|----------|--------|----------|-------|-------------|
+| Performance Fee | 10% | LP (CASHCAT-ETH) | 50% / 25% / 25% | YEW buy / Team / Protocol LP |
+| Withdrawal Fee | 0.5% | LP | same split | YEW buy / Team / Protocol LP |
+| Deposit Fee | 0% | — | — | — |
+| Management Fee | $0 | — | — | — |
 
-1. **Deposits are pooled.** Gas costs are shared across all participants.
-2. **Yield is auto-compounded.** Rewards are harvested and reinvested automatically.
-3. **FLETCH accumulates.** Users earn more the longer they stay.
-4. **The YEW treasury grows.** A percentage of all yield protects the protocol's long-term value.
+**Benchmark:** Autofarm and Beefy standard vault model — 0% deposit, 0.5% withdrawal, 10% performance fee.
 
----
-
-## 4. How GRAZE Works
-
-### Depositing
-
-1. User acquires LP tokens (e.g., CASHCAT-ETH or JUGGERNAUT-ETH) on a Robinhood Chain DEX such as RVNDEX or JUGGERNUT Swap.
-2. User connects a Web3 wallet (MetaMask, Robinhood Wallet) to the GRAZE frontend.
-3. User deposits LP tokens into the chosen vault.
-4. The vault immediately stakes the LP tokens in the underlying MasterChef pool.
-5. FLETCH rewards begin accruing in real time.
-
-### Earning
-
-- FLETCH rewards are distributed per block, proportional to the user's share of the vault.
-- Rewards compound automatically — users do not need to manually claim and restake.
-- APR is displayed on the vault dashboard and updates as the reward rate changes.
-
-### Withdrawing
-
-- User initiates a withdrawal from the vault.
-- A 0.5% withdrawal fee is applied to discourage rapid exits and flash-loan attacks.
-- The vault unstakes the corresponding LP tokens and returns them to the user.
-- FLETCH rewards are included in the withdrawal or can be claimed separately.
+**Why LP instead of FLETCH?**
+Performance fees taken in FLETCH require a FLETCH market to exist and have value before the protocol earns anything. By taking fees in the LP pair (which has immediate, real value from the AMM), the protocol earns meaningful revenue from day one. The LP is then decomposed into ETH + CASHCAT, and each portion is deployed productively.
 
 ---
 
-## 5. Tokenomics
+## Tokenomics
 
-### FLETCH — Reward Token
+### FLETCH — The Yield Token
+- **Type:** ERC-20, mintable by authorised vaults only
+- **Total Supply:** Unlimited (inflationary via rewards)
+- **Distribution:** 100% to stakers via GRAZE vaults. No team allocation, no VC allocation, no pre-mine.
+- **Utility:** Yield token. Stake LP → earn FLETCH.
 
-FLETCH is the protocol's reward token. It is minted by the vault contracts as yield is harvested and distributed to stakers.
+### YEW — The Treasury Token
+- **Type:** ERC-20, fixed supply
+- **Total Supply:** 10,000,000 (10M)
+- **Initial Distribution:** 100% to community treasury (Liquidity Bootstrap Pool)
+- **Seed Price:** Set at launch by seeding YEW/ETH pool with $100
+- **Utility:** Governance, fee capture, treasury ownership
+- **Value Driver:** Every harvest buys YEW from the YEW/ETH LP, creating consistent buy pressure
 
-- **Token type:** ERC-20 (Robinhood Chain)
-- **Total supply:** Uncapped — inflationary by design to fund continuous yield
-- **Emission:** Vault contracts mint FLETCH per block based on vault allocation
-- **Purpose:** Incentivise LP providers to stake and secure protocol liquidity
-- **Value accrual:** Each FLETCH represents a claim on the YEW treasury
+### YEW/ETH LP — The Treasury Asset
+The YEW treasury does not hold YEW tokens — it holds YEW/ETH LP tokens. The ETH portion accumulates with every harvest as the team sells its 25% cut and as the protocol buys YEW. The YEW side grows as protocol fees are routed to buy YEW.
 
-### YEW — Treasury Token
-
-YEW is the protocol's treasury token. It accumulates value through performance fees and provides long-term backing for FLETCH.
-
-- **Token type:** ERC-20 (Robinhood Chain)
-- **Total supply:** 10,000,000 (fixed)
-- **Distribution:** 100% to the YEW treasury (community owned, no team allocation)
-- **Value accrual:** 10% of all harvested yield is routed to YEW on every harvest
-- **Purpose:** Back FLETCH value, fund protocol development, reward long-term stakers
-
-### Fee Summary
-
-| Fee Type | Rate | Destination |
-|---|---|---|
-| Performance fee | 10% | YEW Treasury |
-| Withdrawal fee | 0.5% | GRAZE vault |
-| Management fee | 0% | — |
+Over time the LP becomes more valuable, creating a genuine price floor and yield opportunity for YEW stakers.
 
 ---
 
-## 6. Vaults
+## GRAZE Vault Mechanics
 
-### GRAZE — CASHCAT-ETH LP Vault
-**Status:** Live (MVP)
-**LP Pair:** CASHCAT / ETH
-**LP Address:** `0xa70fc67c9f69da90b63a0e4c05d229954574e313`
-**Pool alloc:** 50 FLETCH per block
+### How It Works
 
-### GRAZE — JUGGERNAUT-ETH LP Vault
-**Status:** Live (MVP)
-**LP Pair:** JUGGERNAUT / ETH
-**LP Address:** `0x588b0785f50063260003b7790c42f1ef74902746`
-**Pool alloc:** 50 FLETCH per block
+1. **User deposits LP tokens** (e.g., CASHCAT-ETH or JUGGERNAUT-ETH) into a GRAZE vault
+2. **FLETCH rewards accrue** per block, proportional to the user's share of the pool
+3. **On harvest:** User claims FLETCH. 10% of the reward (valued in LP terms) is taken as a performance fee, split three ways.
+4. **On withdrawal:** 0.5% withdrawal fee, same three-way split.
+5. **APRs compress over time** as more users stake — normal and expected. Early movers earn more.
 
-### THE GLADE — Multi-Vault Aggregator
-**Status:** Planned
-**Description:** Cross-vault optimisation strategy. Automatically rotates capital between the highest-yielding GRAZE vaults.
+### Fee Processing Detail
 
-### GRAZE — FLETCH-ETH LP Vault
-**Status:** Planned
-**Description:** LP FLETCH with ETH to earn a share of all protocol yield in a single position.
+When a fee is collected (performance or withdrawal):
 
----
+1. **Remove liquidity:** The fee LP is removed from CASHCAT-ETH, yielding CASHCAT tokens + ETH
+2. **Split:** ETH is divided 50% / 25% / 25%
+3. **YEW buy:** 50% ETH is swapped for YEW via DEX, then added as YEW/ETH LP → sent to YEW treasury
+4. **Team payment:** 25% ETH sent directly to team wallet
+5. **Protocol LP:** 25% ETH + equivalent CASHCAT → added as CASHCAT-ETH LP → protocol-owned address
 
-## 7. Security
-
-LOCKSLEY is built with security as the primary constraint:
-
-- **Battle-tested contracts:** GRAZE is based on the SushiSwap MasterChef V1 contract pattern, one of the most audited DeFi primitives in existence (audited by OpenZeppelin, Quantstamp, and independent researchers).
-- **OpenZeppelin standards:** All tokens use OpenZeppelin's ERC-20 implementation.
-- **No admin keys post-launch:** Once deployed, the owner role is transferred to a timelock or renounced.
-- **Transparent and on-chain:** All vault logic, reward calculations, and fee flows are verifiable on-chain.
-- **Self-custodial:** Users never lose custody of their assets. Withdraw anytime.
+### Security Considerations
+- No admin keys that can withdraw user funds
+- Performance fees go through AMM — transparent and on-chain verifiable
+- Emergency LP withdrawal function exists for edge cases only
+- Try-catch around AMM calls prevents reverts from blocking withdrawals
 
 ---
 
-## 8. Governance
+## Roadmap
 
-LOCKSLEY is a community protocol. No team tokens. No investor allocation. No governance token at launch — decisions are made through informal community consensus on Discord and Telegram, with smart contract changes proposed via public GitHub.
-
-As the protocol matures, governance will transition to YEW holders, who will vote on:
-- New vault proposals
-- Fee parameter adjustments
-- Treasury grant distributions
-- Protocol upgrade management
-
----
-
-## 9. Roadmap
-
-### Phase 1 — MVP Launch ✅
-- [x] GRAZE MasterChef contract (SushiSwap V1 pattern)
+### Phase 1 ✅ — GRAZE (Current)
+- [x] Smart contracts (MasterChef V1 pattern, LP-based fee model)
+- [x] GRAZE vault (CASHCAT-ETH, JUGGERNAUT-ETH)
 - [x] FLETCH reward token
 - [x] YEW treasury token
-- [x] CASHCAT-ETH LP vault
-- [x] JUGGERNAUT-ETH LP vault
-- [x] Website and frontend
-- [ ] Fair launch (no pre-mine, no VC allocation)
+- [x] Performance fee → 50% YEW buy / 25% team / 25% protocol LP
+- [ ] Mainnet deployment (RPC confirmed)
+- [ ] Fair launch (Pump.fun)
+- [ ] Seed YEW/ETH LP with $100
 
-### Phase 2 — Growth
-- [ ] THE GLADE multi-vault aggregator
-- [ ] FLETCH-ETH LP vault
-- [ ] Additional LP pair vaults (community proposals)
-- [ ] Community marketing and liquidity incentives
+### Phase 2 — THE GLADE
+- Multi-vault aggregation
+- Auto-compounding vaults
+- Additional LP pairs (RvnDEX native pairs)
 
-### Phase 3 — Decentralisation
-- [ ] YEW governance activation
-- [ ] Timelock contract for upgrades
-- [ ] Multi-sig treasury management
-- [ ] Grants programme (funded by YEW treasury)
+### Phase 3 — Governance
+- Decentralised governance (Timelock + Multisig)
+- Community-controlled fee parameters
+- Protocol-owned liquidity (POL)
 
 ---
 
-## 10. FAQ
+## FAQ
 
-**Is this a fork of SushiSwap?**
-Yes — GRAZE uses the SushiSwap MasterChef V1 contract pattern as its vault foundation. This is intentional. The MasterChef is one of the most battle-tested contracts in DeFi. Our innovations are the FLETCH/YEW tokenomics, the fee model, and the community-first distribution.
+**Q: Why does the team get paid in ETH rather than FLETCH or YEW?**
+A: ETH is the most liquid asset on any chain. The team can convert ETH to whatever it needs. Paying the team in FLETCH would require selling FLETCH on an illiquid market at launch — bad for price. Paying in YEW would dilute treasury. ETH is neutral and immediately useful.
 
-**Why is FLETCH inflationary?**
-Inflationary rewards are how yield protocols attract liquidity. Unlike governance tokens that may not have intrinsic value accrual, FLETCH value is backed by YEW treasury accumulation. As the treasury grows, the value of each FLETCH increases.
+**Q: What backs YEW's value?**
+A: Two things: (1) The YEW/ETH LP in the treasury grows with every harvest as protocol fees buy YEW. (2) The team and early investors have skin in the game — the YEW/ETH LP is seeded at launch with real capital. As GRAZE TVL grows, more harvests → more YEW buys → higher YEW price.
 
-**What protects FLETCH from becoming worthless?**
-The 10% performance fee flowing to YEW creates a compounding feedback loop. As yield is harvested, both FLETCH holders and the YEW treasury benefit. The treasury acts as a value reserve.
+**Q: Why does the protocol own its own LP?**
+A: Most yield aggregators rent liquidity from LPs — if LPs leave, the protocol's yield source disappears. Protocol-owned LP (POL) means GRAZE has its own independent liquidity that can't be taken away. The 25% protocol LP cut builds this over time.
 
-**Are my funds safe?**
-You retain full custody of your LP tokens at all times. You can withdraw from the vault at any time. The contracts are open-source and verified on-chain.
+**Q: What's the difference between FLETCH and YEW?**
+A: FLETCH is an inflationary yield token — you earn it by staking. YEW is a fixed-supply ownership token — it represents your share of the treasury and governance rights. Think FLETCH = stock, YEW = ownership.
 
-**Who runs this?**
-LOCKSLEY is a community project with no team allocation, no VC investors, and no pre-mined tokens. The contracts are autonomous once deployed.
-
----
-
-## 11. Links
-
-- **Website:** https://locksleyfi.com (coming soon)
-- **Twitter:** https://x.com/locksleyfi
-- **Telegram:** https://t.me/locksleyfi
-- **GitHub:** https://github.com/locksleydefi/locksley-protocol
+**Q: What happens when CASHCAT or JUGGERNAUT tokens dump?**
+A: GRAZE earns rewards in FLETCH regardless of the underlying token price. If the LP pair loses value, stakers' FLETCH APR may look high in token terms but low in USD terms — same as any yield farm. The protocol's 25% protocol LP cut means the team also loses when tokens dump — team and protocol are aligned with stakers.
 
 ---
 
-*LOCKSLEY PROTOCOL — DeFi Farming on Robinhood Chain.*
-*FLETCH. EARN. YEW. GOVERN.*
+*Locksley Protocol. Built by the community, for the community. No VCs. No pre-mine. No shortcuts.*
