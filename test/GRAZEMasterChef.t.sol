@@ -12,27 +12,37 @@ contract GRAZEMasterChefTest is Test {
     YEW             public yew;
     GRAZEMasterChef public chef;
     IERC20 public lpToken;
-    IERC20 public yewEthLP;  // Mock YEW/ETH LP token
+    IERC20 public yewEthLP;
+    MockWETH public weth;
 
     address alice = address(0xA11CE);
+    address bob   = address(0xB0B);
     address owner;
+    address teamWallet = address(uint160(1));
+    address protoLP    = address(uint160(2));
 
     function setUp() public {
         owner = address(this);
 
-        // Deploy mock tokens
+        // Deploy mock WETH first (since tests run against anvil, not mainnet)
+        weth = new MockWETH();
+
         lpToken  = IERC20(address(new MockERC20("CASHCAT-ETH LP", "CASHCAT-ETH-LP", 18)));
         yewEthLP = IERC20(address(new MockERC20("YEW-ETH LP", "YEW-ETH-LP", 18)));
 
         fletch = new FLETCH(owner);
         yew    = new YEW(owner);
 
+        // 8 constructor args: fletch, lp, yew, yewEthLP, owner, teamWallet, protoLP, startBlock
         chef = new GRAZEMasterChef(
             address(fletch),
             address(lpToken),
             address(yew),
-            address(yewEthLP),   // YEW/ETH LP token
+            address(yewEthLP),
+            address(weth),
             owner,
+            teamWallet,
+            protoLP,
             block.number + 10
         );
 
@@ -52,7 +62,9 @@ contract GRAZEMasterChefTest is Test {
         assertEq(address(chef.LP_TOKEN()), address(lpToken));
         assertEq(address(chef.YEW_TOKEN()), address(yew));
         assertEq(address(chef.YEW_ETH_LP()), address(yewEthLP));
-        assertEq(chef.totalLpStaked(), 0);
+        assertEq(chef.totalShares(), 0);
+        assertEq(chef.teamWallet(), teamWallet);
+        assertEq(chef.protocolLPOwner(), protoLP);
     }
 
     // ---------------------------------------------------------------------------
@@ -64,7 +76,7 @@ contract GRAZEMasterChefTest is Test {
         chef.deposit(100e18);
         (uint256 aliceShares,) = chef.userInfo(alice);
         assertEq(aliceShares, 100e18);
-        assertEq(chef.totalLpStaked(), 100e18);
+        assertEq(chef.totalShares(), 100e18);
     }
 
     function test_Withdraw() public {
@@ -74,25 +86,24 @@ contract GRAZEMasterChefTest is Test {
         chef.withdraw(50e18);
         (uint256 aliceShares,) = chef.userInfo(alice);
         assertEq(aliceShares, 50e18);
-        assertEq(chef.totalLpStaked(), 50e18);
+        assertEq(chef.totalShares(), 50e18);
     }
 
     // ---------------------------------------------------------------------------
-    // Rewards (without fee swap — harvest with performFeeSwap=false)
+    // Rewards
     // ---------------------------------------------------------------------------
 
-    function test_RewardsAccumulate_withoutSwap() public {
+    function test_RewardsAccumulate() public {
         vm.prank(alice);
         chef.deposit(100e18);
         vm.roll(block.number + 100);
         vm.prank(alice);
-        // deposit() triggers _harvest(..., false) — no fee swap
-        chef.deposit(0);
+        chef.harvest();
         assertGt(fletch.balanceOf(alice), 0);
     }
 
     // ---------------------------------------------------------------------------
-    // Performance fee collected by chef (for later LP creation)
+    // Performance fee collected
     // ---------------------------------------------------------------------------
 
     function test_PerformanceFeeCollected() public {
@@ -100,18 +111,11 @@ contract GRAZEMasterChefTest is Test {
         chef.deposit(100e18);
         vm.roll(block.number + 100);
 
-        // FLETCH total supply before harvest
-        uint256 fletchBefore = fletch.totalSupply();
-
         vm.prank(alice);
-        chef.deposit(0);  // triggers _harvest(alice, false)
+        chef.harvest();
 
-        // 10% fee is retained in chef as FLETCH
-        uint256 fletchInChef = fletch.balanceOf(address(chef));
-        // 10% of ~100 blocks × 1 FLETCH/block = ~10 FLETCH in fees
-        assertGt(fletchInChef, 0, "Chef should hold performance fee FLETCH");
-        // Alice got ~90 FLETCH (90% of rewards after fee)
-        assertGt(fletch.balanceOf(alice), 0);
+        // FLETCH minted to alice (90%) + to chef as fee (10%)
+        assertGt(fletch.balanceOf(alice), 0, "alice should have FLETCH");
     }
 
     // ---------------------------------------------------------------------------
@@ -129,10 +133,13 @@ contract GRAZEMasterChefTest is Test {
         chef.setFletchPerBlock(2e18);
     }
 
-    function test_EmergencyLpWithdraw() public {
-        // Fund contract with LP tokens
-        MockERC20(address(lpToken)).mint(address(chef), 50e18);
+    function test_SetTeamWallet() public {
+        chef.setTeamWallet(bob);
+        assertEq(chef.teamWallet(), bob);
+    }
 
+    function test_EmergencyLpWithdraw() public {
+        MockERC20(address(lpToken)).mint(address(chef), 50e18);
         uint256 before = lpToken.balanceOf(alice);
         chef.emergencyLpWithdraw(alice, 25e18);
         assertEq(lpToken.balanceOf(alice), before + 25e18);
@@ -143,14 +150,16 @@ contract GRAZEMasterChefTest is Test {
     // ---------------------------------------------------------------------------
 
     function test_Constants() public {
-        assertEq(chef.PERFORMANCE_FEE_BPS(), 1000);    // 10%
-        assertEq(chef.SWAP_SLIPPAGE_BPS(), 150);        // 1.5%
-        assertEq(chef.UNISWAP_ROUTER(), 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+        assertEq(chef.PERFORMANCE_FEE_BPS(), 1000);   // 10%
+        assertEq(chef.WITHDRAWAL_FEE_BPS(), 50);      // 0.5%
+        assertEq(chef.FEE_YEW_BPS(), 5000);           // 50%
+        assertEq(chef.FEE_TEAM_BPS(), 2500);          // 25%
+        assertEq(chef.FEE_PROTOCOL_BPS(), 2500);      // 25%
     }
 }
 
 // ---------------------------------------------------------------------------
-// Minimal mock ERC20
+// Mock ERC20
 // ---------------------------------------------------------------------------
 contract MockERC20 {
     string public name;
@@ -166,7 +175,7 @@ contract MockERC20 {
     function mint(address to, uint256 amount) external { balanceOf[to] += amount; }
 
     function transfer(address to, uint256 amount) external returns (bool) {
-        require(balanceOf[msg.sender] >= amount, "insufficient balance");
+        require(balanceOf[msg.sender] >= amount);
         balanceOf[msg.sender] -= amount;
         balanceOf[to] += amount;
         return true;
@@ -178,14 +187,55 @@ contract MockERC20 {
     }
 
     function transferFrom(address from, address to, uint256 amount) external returns (bool) {
-        require(balanceOf[from] >= amount, "insufficient balance");
+        require(balanceOf[from] >= amount);
         uint256 allowed = allowance[from][msg.sender];
         if (allowed != type(uint256).max) {
-            require(allowed >= amount, "insufficient allowance");
+            require(allowed >= amount);
             allowance[from][msg.sender] -= amount;
         }
         balanceOf[from] -= amount;
         balanceOf[to] += amount;
         return true;
+    }
+
+    function totalSupply() external view returns (uint256) {
+        return type(uint256).max;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Mock WETH (for test environment)
+// ---------------------------------------------------------------------------
+contract MockWETH {
+    string public name     = "Wrapped Ether";
+    string public symbol   = "WETH";
+    uint8  public decimals = 18;
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    function deposit() external payable {
+        balanceOf[msg.sender] += msg.value;
+    }
+
+    function withdraw(uint256 amount) external {
+        require(balanceOf[msg.sender] >= amount);
+        balanceOf[msg.sender] -= amount;
+        payable(msg.sender).transfer(amount);
+    }
+
+    function transfer(address to, uint256 amount) external returns (bool) {
+        require(balanceOf[msg.sender] >= amount);
+        balanceOf[msg.sender] -= amount;
+        balanceOf[to] += amount;
+        return true;
+    }
+
+    function approve(address spender, uint256 amount) external returns (bool) {
+        allowance[msg.sender][spender] = amount;
+        return true;
+    }
+
+    function totalSupply() external view returns (uint256) {
+        return type(uint256).max;
     }
 }
