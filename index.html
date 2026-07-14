@@ -38,10 +38,18 @@ body {
 /* Site-wide top banner */
 .site-banner {
   width: 100%;
-  height: 120px;
+  height: 220px;
   object-fit: cover;
   display: block;
   border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  .site-banner { height: 160px; }
+}
+
+@media (max-width: 480px) {
+  .site-banner { height: 120px; }
 }
 
 .nav {
