@@ -483,8 +483,8 @@ body {
   font-size: 20px;
 }
 
-.icon-fodder { background: linear-gradient(135deg, var(--forest-mid), var(--forest-light)); }
-.icon-soil { background: linear-gradient(135deg, #5a3a1a, #8a5a2a); }
+.icon-fletch { background: linear-gradient(135deg, var(--forest-mid), var(--forest-light)); }
+.icon-yew { background: linear-gradient(135deg, #5a3a1a, #8a5a2a); }
 .icon-graze { background: linear-gradient(135deg, var(--gold), var(--amber)); }
 .icon-glade { background: linear-gradient(135deg, #1a4a2a, #2a7a3a); }
 
@@ -684,13 +684,13 @@ body {
       <circle cx="20" cy="20" r="3" fill="#c9a227"/>
     </svg>
     <div>
-      <div class="logo-text">SHERWOOD</div>
+      <div class="logo-text">LOCKSLEY</div>
       <div class="logo-sub">Protocol</div>
     </div>
   </div>
   <ul class="nav-links">
     <li><a href="#graze" class="active">GRAZE</a></li>
-    <li><a href="#fodder">FODDER</a></li>
+    <li><a href="#fletch">FLETCH</a></li>
     <li><a href="#dashboard">DASHBOARD</a></li>
     <li><a href="#about">ABOUT</a></li>
   </ul>
@@ -699,8 +699,8 @@ body {
 
 <!-- Hero -->
 <section class="hero">
-  <div class="hero-badge">🌲 Now Live on Robinhood Chain</div>
-  <h1>THE <span>SHERWOOD</span><br>PROTOCOL</h1>
+  <div class="hero-badge">🌲 Coming to Robinhood Chain</div>
+  <h1>THE <span>LOCKSLEY</span><br>PROTOCOL</h1>
   <p class="tagline">The forest where your assets grow</p>
 
   <div class="hero-stats">
@@ -724,7 +724,7 @@ body {
 
   <div class="hero-cta">
     <button class="btn-primary" onclick="connectWallet()">Enter the Forest</button>
-    <button class="btn-secondary">Read the Docs</button>
+    <button class="btn-secondary" onclick="window.open('https://github.com/locksleydefi/locksley-protocol/blob/main/SPEC.md')">Read the Litepaper</button>
   </div>
 </section>
 
@@ -780,25 +780,27 @@ body {
           <div class="farm-stat-label">7d Yield</div>
         </div>
       </div>
-      <button class="farm-btn farm-btn-stake" onclick="showNotification('Connect your wallet to start grazing �鹿')">STAKE CASHCAT LP</button>
+      <div style="font-size:10px; color: var(--text-dim); margin-bottom: 12px; font-family: 'Space Mono', monospace;">LP: 0xa70f...4e313</div>
+      <button class="farm-btn farm-btn-stake" onclick="showNotification('Connect your wallet to start grazing 🦌')">STAKE CASHCAT LP</button>
     </div>
 
-    <!-- GRAZE: FODDER/ETH -->
+    <!-- GRAZE: FLETCH/ETH LP -->
     <div class="farm-card">
       <div class="farm-header">
         <div>
-          <div class="farm-name">GRAZE — FODDER/ETH</div>
+          <div class="farm-name">GRAZE — FLETCH LP</div>
           <div class="farm-type">Protocol LP Staking</div>
         </div>
         <span class="farm-badge badge-green">NEW</span>
       </div>
       <div class="farm-tokens">
         <div class="token-stack">
-          <div class="token-icon" style="background: linear-gradient(135deg, #2d5a2d, #4a8a4a);">🌿</div>
+          <div class="token-icon" style="background: linear-gradient(135deg, #c9a227, #e8c547);">F</div>
           <div class="token-icon" style="background: linear-gradient(135deg, #1a8a4a, #2dba6a);">ETH</div>
         </div>
-        <span class="farm-pair-label">FODDER-ETH LP</span>
+        <span class="farm-pair-label">FLETCH-ETH LP</span>
       </div>
+      <div style="font-size:10px; color: var(--text-dim); margin-bottom: 12px; font-family: 'Space Mono', monospace;">LP: TBD — deploy FLETCH-ETH pool first</div>
       <div class="farm-chart">
         <svg class="chart-line" viewBox="0 0 300 60" preserveAspectRatio="none">
           <polyline fill="none" stroke="#c9a227" stroke-width="2" points="
@@ -823,7 +825,7 @@ body {
           <div class="farm-stat-label">7d Yield</div>
         </div>
       </div>
-      <button class="farm-btn farm-btn-stake" onclick="showNotification('Connect your wallet to graze FODDER 🦌')">STAKE FODDER LP</button>
+      <button class="farm-btn farm-btn-stake" onclick="showNotification('Connect your wallet to graze FLETCH 🦌')">STAKE FLETCH LP</button>
     </div>
 
     <!-- GRAZE: JUGGERNAUT LP -->
@@ -842,6 +844,7 @@ body {
         </div>
         <span class="farm-pair-label">JUGGERNAUT-ETH LP</span>
       </div>
+      <div style="font-size:10px; color: var(--text-dim); margin-bottom: 12px; font-family: 'Space Mono', monospace;">LP: 0x588b...02746</div>
       <div class="farm-chart">
         <svg class="chart-line" viewBox="0 0 300 60" preserveAspectRatio="none">
           <polyline fill="none" stroke="#c9a227" stroke-width="2" points="
@@ -915,11 +918,11 @@ body {
   </div>
 </section>
 
-<!-- FODDER Token Info -->
-<section class="section" id="fodder">
+<!-- FLETCH Token Info -->
+<section class="section" id="fletch">
   <div class="section-header">
     <div>
-      <div class="section-title">🌱 THE SOIL — Protocol Tokens</div>
+      <div class="section-title">🌱 THE YEW — Protocol Tokens</div>
       <div class="section-subtitle">The roots beneath the forest floor</div>
     </div>
   </div>
@@ -927,19 +930,19 @@ body {
   <div class="token-section">
     <div class="token-grid">
       <div class="token-info-card">
-        <div class="token-info-icon icon-fodder">🌿</div>
-        <div class="token-info-name">FODDER</div>
-        <div class="token-info-desc">Earned by graziers. Stake LP → earn FODDER. Compound or sell.</div>
+        <div class="token-info-icon icon-fletch">🌿</div>
+        <div class="token-info-name">FLETCH</div>
+        <div class="token-info-desc">Earned by graziers. Stake LP → earn FLETCH. Compound or sell.</div>
       </div>
       <div class="token-info-card">
         <div class="token-info-icon icon-graze">🦌</div>
         <div class="token-info-name">GRAZE</div>
-        <div class="token-info-desc">The staking product. Deposit LP tokens, harvest FODDER rewards.</div>
+        <div class="token-info-desc">The staking product. Deposit LP tokens, harvest FLETCH rewards.</div>
       </div>
       <div class="token-info-card">
-        <div class="token-info-icon icon-soil">�ite</div>
-        <div class="token-info-name">SOIL</div>
-        <div class="token-info-desc">The treasury. Fees accumulate here. Backs FODDER value.</div>
+        <div class="token-info-icon icon-yew">🌳</div>
+        <div class="token-info-name">YEW</div>
+        <div class="token-info-desc">The treasury. Fees accumulate here. Backs FLETCH value.</div>
       </div>
       <div class="token-info-card">
         <div class="token-info-icon icon-glade">🌲</div>
@@ -984,22 +987,22 @@ body {
       </div>
       <div class="position-value">$3,241.00</div>
       <div class="position-value green">+14.2%</div>
-      <div class="position-value gold">284 FODDER</div>
-      <button class="farm-btn farm-btn-claim" style="width:auto; padding:8px 16px;" onclick="showNotification('Claimed 284 FODDER! 🌿')">CLAIM</button>
+      <div class="position-value gold">284 FLETCH</div>
+      <button class="farm-btn farm-btn-claim" style="width:auto; padding:8px 16px;" onclick="showNotification('Claimed 284 FLETCH! 🌿')">CLAIM</button>
     </div>
 
     <div class="position-row" style="border-bottom: 1px solid var(--border);">
       <div class="position-token">
         <div class="token-icon" style="background: linear-gradient(135deg, #2d5a2d, #4a8a4a); width:28px; height:28px; font-size:9px; margin-left:0;">🌿</div>
         <div>
-          <div class="position-token-name">FODDER</div>
+          <div class="position-token-name">FLETCH</div>
           <div class="position-token-type">Token Balance</div>
         </div>
       </div>
-      <div class="position-value">284 FODDER</div>
+      <div class="position-value">284 FLETCH</div>
       <div class="position-value green">$127.80</div>
       <div class="position-value">@ $0.45</div>
-      <button class="farm-btn farm-btn-stake" style="width:auto; padding:8px 16px;" onclick="showNotification('Add FODDER to the LP 🌿')">ADD TO LP</button>
+      <button class="farm-btn farm-btn-stake" style="width:auto; padding:8px 16px;" onclick="showNotification('Add FLETCH to the LP 🌿')">ADD TO LP</button>
     </div>
 
     <div class="position-row">
@@ -1012,7 +1015,7 @@ body {
       </div>
       <div class="position-value">$1,582.47</div>
       <div class="position-value green">+5.3%</div>
-      <div class="position-value gold">0 FODDER</div>
+      <div class="position-value gold">0 FLETCH</div>
       <button class="farm-btn farm-btn-claim" style="width:auto; padding:8px 16px;" disabled>STAKE MORE</button>
     </div>
   </div>
@@ -1022,7 +1025,7 @@ body {
 <section class="section" id="about">
   <div class="section-header">
     <div>
-      <div class="section-title">🏕️ How Sherwood Works</div>
+      <div class="section-title">🏕️ How LOCKSLEY Works</div>
       <div class="section-subtitle">Fair yield. No pre-mine. No hidden fees.</div>
     </div>
   </div>
@@ -1035,13 +1038,13 @@ body {
     </div>
     <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; text-align: center;">
       <div style="font-size: 32px; margin-bottom: 12px;">🌿</div>
-      <div style="font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 8px;">2. EARN FODDER</div>
-      <div style="font-size: 12px; color: var(--text-dim); line-height: 1.6;">FODDER rewards accumulate automatically. Claim anytime, compound for more.</div>
+      <div style="font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 8px;">2. EARN FLETCH</div>
+      <div style="font-size: 12px; color: var(--text-dim); line-height: 1.6;">FLETCH rewards accumulate automatically. Claim anytime, compound for more.</div>
     </div>
     <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; text-align: center;">
       <div style="font-size: 32px; margin-bottom: 12px;">🌳</div>
-      <div style="font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 8px;">3. SOIL GROWS</div>
-      <div style="font-size: 12px; color: var(--text-dim); line-height: 1.6;">The treasury accumulates from withdrawal fees. Your FODDER becomes more valuable.</div>
+      <div style="font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 8px;">3. YEW GROWS</div>
+      <div style="font-size: 12px; color: var(--text-dim); line-height: 1.6;">The treasury accumulates from withdrawal fees. Your FLETCH becomes more valuable.</div>
     </div>
   </div>
 
@@ -1057,14 +1060,13 @@ body {
 
 <!-- Footer -->
 <footer class="footer">
-  <div class="footer-logo">SHERWOOD PROTOCOL</div>
-  <div class="footer-tagline">🌲 The forest where your assets grow • Built on Robinhood Chain</div>
+  <div class="footer-logo">LOCKSLEY PROTOCOL</div>
+  <div class="footer-tagline">🌲 Yield aggregator on Robinhood Chain • GRAZE vaults earn FLETCH rewards</div>
   <div class="footer-links">
-    <a href="#">GitHub</a>
-    <a href="#">Twitter</a>
-    <a href="#">Telegram</a>
-    <a href="#">Docs</a>
-    <a href="#">Audit</a>
+    <a href="https://github.com/locksleydefi/locksley-protocol" target="_blank">GitHub</a>
+    <a href="#" target="_blank">Twitter</a>
+    <a href="#" target="_blank">Telegram</a>
+    <a href="https://github.com/locksleydefi/locksley-protocol/blob/main/SPEC.md" target="_blank">Docs</a>
   </div>
 </footer>
 
