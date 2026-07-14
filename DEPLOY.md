@@ -1,20 +1,25 @@
 # DEPLOY.md — Locksley Protocol Mainnet Deployment Guide
 
-**Chain:** Robinhood Chain | Chain ID: 4663 | RPC: https://rpc.mainnet.chain.robinhood.com
+**Chain:** Robinhood Chain | Chain ID: 4663
+**RPC:** https://rpc.mainnet.chain.robinhood.com
+**Explorer:** https://robinhoodchain.blockscout.com
 
 ---
 
-## Prerequisites
+## Overview — James's $300 Bootstrap Plan
 
-- MetaMask or wallet with ETH on Robinhood Chain for gas
-- Remix IDE (https://remix.ethereum.org)
-- RPC for_chain: https://rpc.mainnet.chain.robinhood.com
-- Chain ID: 4663
-- Block Explorer: https://robinhoodchain.blockscout.com
+```
+$100 CASHCAT-ETH LP   → stake in GRAZE vault → earn FLETCH
+$100 FLETCH-ETH LP    → stake in YEW vault → earn YEW
+$100 YEW-ETH LP       → seeds YEW price + provides initial YEW liquidity
+```
+
+**FLETCH seed price:** James puts 2,000 FLETCH + £78 ($100) ETH in FLETCH-ETH LP → price £0.039 (~$0.05)
+**YEW seed price:** James seeds YEW-ETH LP with $100 → YEW price discovered at ~$0.05 (put less YEW = higher price)
 
 ---
 
-## On-Chain Addresses (Confirmed)
+## On-Chain Addresses (Confirmed on Robinhood Chain)
 
 | Asset | Address |
 |-------|---------|
@@ -26,120 +31,214 @@
 | Uniswap V2 Factory | `0x1f7d7550b1b028f7571e69a784071f0205fd2efa` |
 | Uniswap V2 Router | `0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D` |
 
-**NOTE:** The Uniswap V2 Router at `0x7a250d...` may return empty code via eth_getCode — use the factory for pair lookups. The router address is confirmed active via on-chain transactions.
+**Deployer address:** `0xdE4cbE36aF237CDe0Bcd630E3C38357d5a32602d`
+
+**NOTE:** Router may return empty code via `eth_getCode`. Use the factory `getPair()` for pair lookups. Router is confirmed active via on-chain transactions.
+
+---
+
+## Tokenomics (Confirmed)
+
+| | FLETCH | YEW |
+|---|---|---|
+| Max supply | 1,000,000,000 (1bn) | 1,000,000,000 (1bn) |
+| Initial supply | 0 (all via emission) | 0 (all via emission) |
+| Emission rate | 0.5/block | 0.05/block |
+| Halving | 50% every 30 days | 50% every 30 days |
+| Emission schedule | Locked in contract | Locked in contract |
 
 ---
 
 ## Deployment Steps
 
-### Step 1 — Deploy FLETCH.sol
+### Step 1 — Fund Your Deployer Wallet
 
-**File:** `src/FLETCH.sol`
+Send ETH to: `0xdE4cbE36aF237CDe0Bcd630E3C38357d5a32602d`
 
-**Constructor args:**
-- `_owner` — your wallet address (the account deploying)
-
-**After deploy:** Copy the FLETCH contract address
+**Recommended:** Coinbase → buy ETH → Orbiter Finance bridge → Robinhood Chain.
+**Minimum needed:** ~0.01 ETH for all deployments + ~£200 for LP seeds.
 
 ---
 
-### Step 2 — Deploy YEW.sol
+### Step 2 — Get Current Block Number
 
-**File:** `src/YEW.sol`
-
-**Constructor args:**
-- `initialOwner` — your wallet address
-
-**Important:** YEW supply = 10,000,000 × 10^18 (fixed forever). All tokens go to `initialOwner` — this is the community treasury. Treat this address carefully.
-
-**After deploy:** Copy the YEW contract address
-
----
-
-### Step 3 — Create YEW/ETH LP on Uniswap V2
-
-**⚠️ Do this BEFORE deploying GRAZEMasterChef — the chef needs the YEW/ETH LP address.**
-
-1. Go to https://robinhoodchain.blockscout.com or your wallet's DEX interface
-2. Navigate to the Uniswap V2 interface (or use the RVNDEX frontend)
-3. Add initial liquidity:
-   - **Token A:** ETH (native) — seed with ~$50-100 worth
-   - **Token B:** YEW — seed with ~$50-100 worth of YEW tokens
-4. This creates the YEW/ETH LP pair and sets the initial price
-5. **Save the LP pair address** — you'll need it for GRAZEMasterChef
-
-**Note:** To get the YEW/ETH LP address, either:
-- Read it from the `PairCreated` event emitted by the factory, OR
-- Use `getPair(YEW, WETH)` on the factory contract
-
----
-
-### Step 4 — Deploy GRAZEMasterChef.sol
-
-**File:** `src/GRAZEMasterChef.sol`
-
-**Constructor args (in order):**
-1. `_fletch` — FLETCH contract address
-2. `_lpToken` — CASHCAT-ETH LP address: `0xa70fc67c9f69da90b63a0e4c05d229954574e313` (or JUGGERNAUT-ETH LP for second vault)
-3. `_yew` — YEW contract address
-4. `_yewEthLP` — YEW/ETH LP pair address (from Step 3)
-5. `_owner` — your wallet address
-6. `_teamWallet` — your wallet address (or multisig later)
-7. `_protocolLPOwner` — your wallet address (or a separate POA address)
-8. `_startBlock` — current block number + a few blocks for buffer (use blockNumber from RPC)
-
-**To get current block number:**
 ```bash
 curl -s -X POST https://rpc.mainnet.chain.robinhood.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
 ```
 
-Add ~10 blocks to the result for `_startBlock`.
-
-**After deploy:**
-- Copy GRAZEMasterChef address
-- Call `fletch.setVault(chefAddress, true)` to authorize the chef to mint FLETCH
-- Verify on block explorer
+Add ~20 blocks to the result for `_startBlock`.
 
 ---
 
-### Step 5 — Authorize Chef to Mint FLETCH
+### Step 3 — Deploy FLETCH.sol
 
-After deploying GRAZEMasterChef, you need to call `setVault()` on the FLETCH contract:
+**File:** `src/FLETCH.sol`
+**Compiler:** Solidity 0.8.x (via-ir = true)
 
-**In Remix:**
+**Constructor args:**
+1. `_owner` — your deployer address
+
+**After deploy:** Copy FLETCH contract address.
+
+---
+
+### Step 4 — Deploy YEW.sol
+
+**File:** `src/YEW.sol`
+**Compiler:** Solidity 0.8.x (via-ir = true)
+
+**Constructor args:**
+1. `initialOwner` — your deployer address
+
+**After deploy:** Copy YEW contract address.
+
+---
+
+### Step 5 — Create FLETCH-ETH LP (sets FLETCH price)
+
+1. Go to Uniswap on Robinhood Chain (or use direct contract calls)
+2. Add liquidity to FLETCH/WETH pair:
+   - **ETH:** ~£78 (~$100)
+   - **FLETCH:** 2,000 FLETCH tokens
+3. This creates the FLETCH-ETH LP and sets FLETCH price = £78/2,000 = **£0.039** (~$0.05)
+4. Save the LP pair address (from `PairCreated` event or factory `getPair(FLETCH, WETH)`)
+
+---
+
+### Step 6 — Deploy YEWVaultChef.sol (YEW vault)
+
+**File:** `src/YEWVaultChef.sol`
+**Compiler:** Solidity 0.8.x (via-ir = true)
+
+**Constructor args (in order):**
+1. `_yew` — YEW contract address
+2. `_fletchEthLP` — FLETCH-ETH LP address (from Step 5)
+3. `_owner` — your deployer address
+4. `_startBlock` — current block + 20
+
+**Emission:** 0.05 YEW/block, halved 50% every 30 days (hard-coded, locked).
+
+**After deploy:** Call `yew.setMinter(chefAddress, true)` on YEW contract.
+
+---
+
+### Step 7 — Create YEW-ETH LP (seeds YEW price)
+
+1. Add liquidity to YEW/WETH pair:
+   - **ETH:** ~£78 (~$100)
+   - **YEW:** small amount (e.g. 1,000 YEW for £0.078 seed = higher price, or more for lower price)
+2. Save the LP pair address.
+
+---
+
+### Step 8 — Deploy GRAZEMasterChef.sol (GRAZE vault)
+
+**File:** `src/GRAZEMasterChef.sol`
+**Compiler:** Solidity 0.8.x (via-ir = true)
+
+**Constructor args (in order):**
+1. `_fletch` — FLETCH contract address
+2. `_lpToken` — `0xa70fc67c9f69da90b63a0e4c05d229954574e313` (CASHCAT-ETH LP)
+3. `_yew` — YEW contract address
+4. `_yewEthLP` — YEW-ETH LP address (from Step 7)
+5. `_owner` — your deployer address
+6. `_teamWallet` — your deployer address (or multisig)
+7. `_protocolLPOwner` — your deployer address
+8. `_startBlock` — current block + 20
+
+**Emission:** 0.5 FLETCH/block, halved 50% every 30 days (hard-coded, locked).
+
+---
+
+### Step 9 — Authorize Chefs to Mint Tokens
+
+**In Remix — Authorize GRAZEMasterChef to mint FLETCH:**
 1. Select FLETCH contract
-2. Call `setVault`
-3. Arg 1: GRAZEMasterChef address
-4. Arg 2: `true`
+2. Under "Contract" → "At address" → paste GRAZEMasterChef address
+3. Call `setVault(yourChefAddress, true)`
+
+**In Remix — Authorize YEWVaultChef to mint YEW:**
+1. Select YEW contract
+2. Under "Contract" → "At address" → paste YEWVaultChef address
+3. Call `setMinter(yourChefAddress, true)`
 
 ---
 
-## Verifying on Block Explorer
+### Step 10 — Create CASHCAT-ETH LP (James's GRAZE stake)
 
-1. Go to https://robinhoodchain.blockscout.com
-2. Search your contract addresses
-3. Verify:
-   - FLETCH: has `setVault` function called by owner
-   - YEW: has 10M total supply
-   - GRAZEMasterChef: `fletchPerBlock()` returns 1e18
-   - GRAZEMasterChef: `teamWallet()` returns your address
+1. Go to DEX on Robinhood Chain
+2. Add liquidity to CASHCAT/WETH pair:
+   - **ETH:** ~£78 (~$100)
+   - **CASHCAT:** ~£78 worth (buy with ETH first or use existing)
+3. Save the LP pair address (already known: `0xa70fc67c9f69da90b63a0e4c05d229954574e313`)
 
 ---
 
-## Gas
+### Step 11 — Deploy GRAZEMasterChef for CASHCAT Vault
 
-Gas price on Robinhood Chain is very low (~50 Gwei equivalent). Deployment should cost < $1 in ETH.
+Already done in Step 8 (CASHCAT-ETH LP = GRAZEMasterChef's `_lpToken`).
+
+**Verify:**
+- Call `fletchPerBlock()` → should return `500000000000000000` (0.5 × 10^18)
+- Call `startBlock()` → should be your chosen start block
+- Call `poolLength()` → should return `1`
+
+---
+
+### Step 12 — Update Website with Contract Addresses
+
+Update `index.html`:
+- GRAZEMasterChef address
+- YEWVaultChef address
+- FLETCH address
+- YEW address
+- LP addresses
 
 ---
 
 ## Post-Deployment Checklist
 
-- [ ] FLETCH deployed and chef authorised
-- [ ] YEW deployed with 10M supply
-- [ ] YEW/ETH LP created and seeded with $100
-- [ ] GRAZEMasterChef deployed for CASHCAT-ETH vault
-- [ ] Deploy second GRAZEMasterChef for JUGGERNAUT-ETH if desired
-- [ ] Update website with all contract addresses
-- [ ] Set up monitoring for chef contract (FLETCH minting, fee collection)
+- [ ] ETH on deployer wallet (Robinhood Chain)
+- [ ] FLETCH deployed → address: ___________
+- [ ] YEW deployed → address: ___________
+- [ ] FLETCH-ETH LP created → address: ___________ (FLETCH price seeded)
+- [ ] YEW-ETH LP created → address: ___________ (YEW price seeded)
+- [ ] YEWVaultChef deployed → address: ___________
+- [ ] YEWVaultChef authorised on YEW contract
+- [ ] GRAZEMasterChef deployed → address: ___________
+- [ ] GRAZEMasterChef authorised on FLETCH contract
+- [ ] CASHCAT-ETH LP created → address: `0xa70fc67c9f69da90b63a0e4c05d229954574e313`
+- [ ] Website updated with all addresses
+- [ ] Website deployed to Netlify
+- [ ] Twitter launch (@locksleyfi)
+
+---
+
+## Gas Estimate
+
+Gas on Robinhood Chain is low. Total deployment cost (4 contracts): < 0.005 ETH (< ~$10 at ETH=$2000).
+
+---
+
+## Verification Commands
+
+```bash
+# Check block number
+curl -s -X POST https://rpc.mainnet.chain.robinhood.com \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
+
+# Check FLETCH total supply (should be 0 at deploy, then grows)
+cast call FLETCH_ADDRESS "totalSupply()(uint256)" --rpc-url https://rpc.mainnet.chain.robinhood.com
+
+# Check YEW total supply (should be 0 at deploy)
+cast call YEW_ADDRESS "totalSupply()(uint256)" --rpc-url https://rpc.mainnet.chain.robinhood.com
+
+# Check FLETCH per block
+cast call GRAZE_ADDRESS "fletchPerBlock()(uint256)" --rpc-url https://rpc.mainnet.chain.robinhood.com
+
+# Check YEW per block
+cast call YEW_VAULT_ADDRESS "yewPerBlock()(uint256)" --rpc-url https://rpc.mainnet.chain.robinhood.com
+```
